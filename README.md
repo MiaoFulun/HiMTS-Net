@@ -1,13 +1,19 @@
 # HiMTS-Net
 
-Training code for **HiMTS-Net: A Native-Axis-Preserving Hierarchical
+Official implementation of **HiMTS-Net: A Native-Axis-Preserving Hierarchical
 Multi-Domain Time--Spectral Network for Small Target Detection in Sea
 Clutter**.
 
-This repository contains the proposed model, the four input representations,
-the IPIX and SDRDSP2022 training-data protocols, and the training entry point.
-It does not include raw datasets, pretrained weights, evaluation scripts,
-baseline implementations, or experimental result files.
+## Overview
+
+HiMTS-Net preserves the native temporal axis while learning hierarchical
+representations from complementary time--spectral inputs. Sample-adaptive
+gating combines the four branches for small target detection in sea clutter.
+
+This repository provides the model architecture, the four input
+representations, data preparation for IPIX and SDRDSP2022, and the experiment
+pipeline described in the paper. Raw datasets, pretrained weights, comparison
+baselines, and experimental result files are not redistributed.
 
 ## Installation
 
@@ -24,17 +30,17 @@ Download the datasets from their official sources and arrange them as follows:
 
 ```text
 data/
-├── ipix/
-│   ├── 19931118_023604_starea280.cdf
-│   └── ...
-└── sdrdsp2022/
-    ├── 20221114140049_stare_HH.mat
-    └── ...
+|-- ipix/
+|   |-- 19931118_023604_starea280.cdf
+|   `-- ...
+`-- sdrdsp2022/
+    |-- 20221114140049_stare_HH.mat
+    `-- ...
 ```
 
 The repository does not redistribute either dataset.
 
-## Training
+## Usage
 
 IPIX:
 
@@ -70,3 +76,6 @@ The supplied configurations use the settings stated in the paper:
 
 Please cite the accompanying paper if this code is useful in your research.
 
+## License
+
+This project is released under the MIT License.
