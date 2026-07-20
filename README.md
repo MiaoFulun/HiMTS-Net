@@ -56,11 +56,6 @@ HiMTS-Net/
 `-- pyproject.toml
 ```
 
-This public release contains the model, feature construction, data preparation,
-training pipeline, and held-out test-set evaluation. Raw datasets, pretrained
-weights, comparison baselines, and precomputed experimental result files are
-not redistributed.
-
 ## Installation
 
 Python 3.10 or newer is required. The dependency file specifies PyTorch 2.7.1
@@ -78,8 +73,8 @@ a CUDA-enabled PyTorch environment is unavailable.
 
 ## Data preparation
 
-The datasets are not included. Obtain them under their respective terms from
-the [McMaster IPIX database](http://soma.ece.mcmaster.ca/ipix/dartmouth/datasets.html)
+Obtain the datasets under their respective terms from the
+[McMaster IPIX database](http://soma.ece.mcmaster.ca/ipix/dartmouth/datasets.html)
 and the [Journal of Radars sea-detecting dataset (2022)](https://radars.ac.cn/web/data/getData?newsColumnId=cbfe5177-6bdd-4a9e-a05e-63b2e50ea438&pageType=en).
 
 Arrange the files as follows:
@@ -145,8 +140,7 @@ The default output directories are `outputs/ipix/` and
 - `test_metrics.json`: held-out test metrics and ROC coordinates, created by
   `test.py`.
 
-These generated files are ignored by Git and are not part of the public
-release.
+Generated files are ignored by Git.
 
 ## Default configuration
 
