@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "himts-net"
 version = "1.0.0"
-description = "Training implementation of HiMTS-Net"
+description = "Official implementation of HiMTS-Net"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -19,4 +19,3 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 where = ["src"]
-
