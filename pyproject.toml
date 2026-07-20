@@ -8,14 +8,6 @@ version = "1.0.0"
 description = "Official implementation of HiMTS-Net"
 readme = "README.md"
 requires-python = ">=3.10"
-dependencies = [
-  "torch==2.7.1",
-  "numpy>=1.26",
-  "scipy>=1.11",
-  "scikit-learn>=1.4",
-  "h5py>=3.10",
-  "PyYAML>=6.0",
-]
 
 [tool.setuptools.packages.find]
 where = ["src"]
