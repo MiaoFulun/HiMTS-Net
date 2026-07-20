@@ -4,78 +4,176 @@ Official implementation of **HiMTS-Net: A Native-Axis-Preserving Hierarchical
 Multi-Domain Time--Spectral Network for Small Target Detection in Sea
 Clutter**.
 
+**Authors:** Fulun Miao (Beijing Institute of Technology) and Guanqun Wang
+(Peking University)
+
 ## Overview
 
-HiMTS-Net preserves the native temporal axis while learning hierarchical
-representations from complementary time--spectral inputs. Sample-adaptive
-gating combines the four branches for small target detection in sea clutter.
+HiMTS-Net is a compact multi-domain network for detecting small floating
+targets in sea clutter. Instead of converting radar echoes into rasterized
+time--frequency images, the method keeps each representation on its native
+physical axis and learns complementary information with four branch-specific
+hierarchical 1D encoders. A sample-adaptive gate then fuses the branch
+embeddings for binary target detection.
 
-This repository provides the model architecture, the four input
-representations, data preparation for IPIX and SDRDSP2022, and the experiment
-pipeline described in the paper. Raw datasets, pretrained weights, comparison
-baselines, and experimental result files are not redistributed.
+![Overall framework of HiMTS-Net](assets/method_overview.png)
+
+*Overall framework of HiMTS-Net. A complex slow-time window is transformed
+into four time--spectral representations, encoded independently, and combined
+by adaptive feature-level fusion.*
+
+### Highlights
+
+- Four complementary inputs: complex slow-time components, local DSE,
+  full-window entropy contribution, and spectral marginal spectrum (SMS).
+- Native-axis-preserving 1D processing without image resizing or
+  interpolation.
+- Hierarchical residual encoders with increasing temporal/spectral receptive
+  fields.
+- Sample-adaptive gated fusion across the four representation branches.
+- 200,613 trainable parameters with the default hidden dimension of 32.
+
+## Repository contents
+
+```text
+HiMTS-Net/
+|-- assets/
+|   `-- method_overview.png       # Method overview from the manuscript
+|-- configs/
+|   |-- ipix.yaml                 # IPIX experiment configuration
+|   `-- sdrdsp2022.yaml           # SDRDSP2022 experiment configuration
+|-- src/himts_net/
+|   |-- data_ipix.py              # IPIX loading, labeling, and splitting
+|   |-- data_sdrdsp2022.py        # SDRDSP2022 loading and splitting
+|   |-- features.py               # Four input representations
+|   |-- model.py                  # HiMTS-Net architecture
+|   |-- runner.py                 # Dataset-to-training orchestration
+|   `-- training.py               # Optimization and checkpoint selection
+|-- train.py                      # Command-line entry point
+|-- requirements.txt
+`-- pyproject.toml
+```
+
+This public release contains the model, feature construction, data preparation,
+and training pipeline. Raw datasets, pretrained weights, evaluation scripts,
+comparison baselines, and experimental result files are not redistributed.
+The evaluation-only thresholding block shown in the method figure is therefore
+outside the scope of this repository.
 
 ## Installation
 
-Python 3.10 or newer is required.
+Python 3.10 or newer is required. The dependency file specifies PyTorch 2.7.1
+and the numerical packages used by the implementation.
 
 ```bash
+git clone https://github.com/3220250895/HiMTS-Net.git
+cd HiMTS-Net
 python -m pip install -r requirements.txt
 python -m pip install -e .
 ```
 
-## Data layout
+The supplied configurations use `device: cuda`. Change this field to `cpu` if
+a CUDA-enabled PyTorch environment is unavailable.
 
-Download the datasets from their official sources and arrange them as follows:
+## Data preparation
+
+The datasets are not included. Obtain them under their respective terms from
+the [McMaster IPIX database](http://soma.ece.mcmaster.ca/ipix/dartmouth/datasets.html)
+and the [Journal of Radars sea-detecting dataset (2022)](https://radars.ac.cn/web/data/getData?newsColumnId=cbfe5177-6bdd-4a9e-a05e-63b2e50ea438&pageType=en).
+
+Arrange the files as follows:
 
 ```text
 data/
 |-- ipix/
 |   |-- 19931118_023604_starea280.cdf
-|   `-- ...
+|   |-- 19931107_135603_starea17.cdf
+|   `-- ...                       # Ten IPIX files listed in data_ipix.py
 `-- sdrdsp2022/
     |-- 20221114140049_stare_HH.mat
-    `-- ...
+    |-- 20221114220100_stare_HH.mat
+    |-- 20221113190042_stare_HH.mat
+    |-- 20221113230100_stare_HH.mat
+    |-- 20221112205109_stare_HH.mat
+    `-- 20221112180016_stare_HH.mat
 ```
 
-The repository does not redistribute either dataset.
+### Expected formats
+
+| Dataset | Expected content | Windowing | Training/validation data |
+| --- | --- | --- | --- |
+| IPIX | NetCDF `.cdf`, variable `adc_data`; HH/HV/VH/VV channels | 512 pulses, stride 32 | Stratified random split: 56% / 14%; the remaining 30% is reserved and not materialized by this release |
+| SDRDSP2022 | HDF5-based `.mat`, matrix `amplitude_complex_T1` | 1024 pulses; target stride 200, clutter stride 1024 | Chronological split: first 70% / next 15%; the final 15% is reserved and not materialized by this release |
+
+For IPIX, the primary target range bin is labeled positive, documented
+target-affected neighboring bins are excluded, and the remaining range bins
+provide clutter samples. For SDRDSP2022, the target and observation cells used
+by the manuscript are defined explicitly in `data_sdrdsp2022.py`.
 
 ## Usage
 
-IPIX:
+Run an IPIX experiment:
 
 ```bash
 python train.py --config configs/ipix.yaml
 ```
 
-SDRDSP2022:
+Run an SDRDSP2022 experiment:
 
 ```bash
 python train.py --config configs/sdrdsp2022.yaml
 ```
 
-Each run writes a locally trained checkpoint, normalization parameters, and
-training history under the configured output directory. These generated files
-are ignored by Git and are not part of the public source release.
+The default output directories are `outputs/ipix/` and
+`outputs/sdrdsp2022/`. Each run creates:
 
-## Method configuration
+- `model.pt`: the selected model state and training configuration;
+- `normalizer.npz`: normalization statistics fitted on the training split;
+- `history.json`: per-epoch training and validation history.
 
-The supplied configurations use the settings stated in the paper:
+These generated files are ignored by Git and are not part of the public
+release.
 
-- hidden dimension: 32
-- encoder kernels: 15, 21, and 31
-- two residual blocks per encoder stage
-- AdamW learning rate: 1e-3
-- batch size: 256
-- training epochs: 30
-- mini-batch hard-negative fraction: 0.25
-- validation model-selection operating point: Pfa = 1e-3
-- random seed: 42
+## Default configuration
+
+| Setting | Value |
+| --- | ---: |
+| Hidden dimension | 32 |
+| Encoder kernels | 15, 21, 31 |
+| Residual blocks per stage | 2 |
+| Optimizer | AdamW |
+| Learning rate | 1e-3 |
+| Batch size | 256 |
+| Epochs | 30 |
+| Hard-negative fraction | 0.25 |
+| Model-selection operating point | Pfa = 1e-3 |
+| Random seed | 42 |
+
+Dataset paths, selected records, window parameters, and computing device can
+be changed in the YAML files under `configs/`.
 
 ## Citation
 
-Please cite the accompanying paper if this code is useful in your research.
+If this repository is useful in your research, please cite the accompanying
+manuscript:
+
+```bibtex
+@misc{miao2026himtsnet,
+  title  = {HiMTS-Net: A Native-Axis-Preserving Hierarchical Multi-Domain
+            Time--Spectral Network for Small Target Detection in Sea Clutter},
+  author = {Fulun Miao and Guanqun Wang},
+  year   = {2026},
+  note   = {Manuscript}
+}
+```
+
+The citation will be updated when a public paper record becomes available.
 
 ## License
 
-This project is released under the MIT License.
+This project is released under the [MIT License](LICENSE).
+
+## Contact
+
+For questions about the implementation, please open a
+[GitHub issue](https://github.com/3220250895/HiMTS-Net/issues).
