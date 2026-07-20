@@ -80,14 +80,19 @@ def _materialize(
     return windows, labels
 
 
-def prepare_ipix_training_data(
+def prepare_ipix_data(
     data_dir: Path,
     dataset_id: int,
     polarization: str,
     seed: int,
     window_length: int = 512,
     window_stride: int = 32,
+    splits: tuple[str, ...] = ("train", "validation", "test"),
 ) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
+    valid_splits = {"train", "validation", "test"}
+    unknown_splits = set(splits) - valid_splits
+    if unknown_splits:
+        raise ValueError(f"Unknown IPIX splits: {', '.join(sorted(unknown_splits))}")
     item = _dataset(dataset_id)
     path = Path(data_dir) / item.file_name
     if not path.exists():
@@ -96,7 +101,7 @@ def prepare_ipix_training_data(
     rows = _rows(item, matrix.shape[0], window_length, window_stride)
     sample_ids = np.arange(len(rows))
     row_labels = np.asarray([row[2] for row in rows])
-    train_pool, _, train_pool_labels, _ = train_test_split(
+    train_pool, test_ids, train_pool_labels, _ = train_test_split(
         sample_ids,
         row_labels,
         test_size=0.30,
@@ -109,20 +114,21 @@ def prepare_ipix_training_data(
         stratify=train_pool_labels,
         random_state=seed,
     )
-    train_windows, train_labels = _materialize(
-        matrix,
-        rows,
-        set(int(value) for value in train_ids),
-        window_length,
-    )
-    validation_windows, validation_labels = _materialize(
-        matrix,
-        rows,
-        set(int(value) for value in validation_ids),
-        window_length,
-    )
+    ids_by_split = {
+        "train": train_ids,
+        "validation": validation_ids,
+        "test": test_ids,
+    }
+    materialized = {
+        split: _materialize(
+            matrix,
+            rows,
+            set(int(value) for value in ids_by_split[split]),
+            window_length,
+        )
+        for split in splits
+    }
     return (
-        {"train": train_windows, "validation": validation_windows},
-        {"train": train_labels, "validation": validation_labels},
+        {split: values[0] for split, values in materialized.items()},
+        {split: values[1] for split, values in materialized.items()},
     )
-

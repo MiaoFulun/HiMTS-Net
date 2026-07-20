@@ -67,6 +67,7 @@ def _split_ranges() -> dict[str, tuple[int, int]]:
     return {
         "train": (0, int(0.70 * PULSE_COUNT)),
         "validation": (int(0.70 * PULSE_COUNT), int(0.85 * PULSE_COUNT)),
+        "test": (int(0.85 * PULSE_COUNT), PULSE_COUNT),
     }
 
 
@@ -81,7 +82,7 @@ def _rows(
     target_stride: int,
     clutter_stride: int,
 ) -> dict[str, list[dict]]:
-    rows = {"train": [], "validation": []}
+    rows = {split: [] for split in _split_ranges()}
     for record in records:
         target_set = set(record.target_cells)
         clutter_cells = [cell for cell in OBSERVATION_CELLS if cell not in target_set]
@@ -158,13 +159,20 @@ def _materialize(
     return windows, labels
 
 
-def prepare_sdrdsp2022_training_data(
+def prepare_sdrdsp2022_data(
     data_dir: Path,
     records: tuple[Record, ...],
     window_length: int = WINDOW_LENGTH,
     target_stride: int = TARGET_STRIDE,
     clutter_stride: int = CLUTTER_STRIDE,
+    splits: tuple[str, ...] = ("train", "validation", "test"),
 ) -> tuple[dict[str, np.ndarray], dict[str, np.ndarray]]:
+    valid_splits = set(_split_ranges())
+    unknown_splits = set(splits) - valid_splits
+    if unknown_splits:
+        raise ValueError(
+            f"Unknown SDRDSP2022 splits: {', '.join(sorted(unknown_splits))}"
+        )
     rows = _rows(
         records,
         window_length=window_length,
@@ -172,11 +180,10 @@ def prepare_sdrdsp2022_training_data(
         clutter_stride=clutter_stride,
     )
     materialized = {
-        split: _materialize(data_dir, split_rows, window_length)
-        for split, split_rows in rows.items()
+        split: _materialize(data_dir, rows[split], window_length)
+        for split in splits
     }
     return (
         {split: values[0] for split, values in materialized.items()},
         {split: values[1] for split, values in materialized.items()},
     )
-
