@@ -45,20 +45,21 @@ HiMTS-Net/
 |-- src/himts_net/
 |   |-- data_ipix.py              # IPIX loading, labeling, and splitting
 |   |-- data_sdrdsp2022.py        # SDRDSP2022 loading and splitting
+|   |-- evaluation.py             # Held-out test-set evaluation
 |   |-- features.py               # Four input representations
 |   |-- model.py                  # HiMTS-Net architecture
 |   |-- runner.py                 # Dataset-to-training orchestration
 |   `-- training.py               # Optimization and checkpoint selection
 |-- train.py                      # Command-line entry point
+|-- test.py                       # Held-out test entry point
 |-- requirements.txt
 `-- pyproject.toml
 ```
 
 This public release contains the model, feature construction, data preparation,
-and training pipeline. Raw datasets, pretrained weights, evaluation scripts,
-comparison baselines, and experimental result files are not redistributed.
-The evaluation-only thresholding block shown in the method figure is therefore
-outside the scope of this repository.
+training pipeline, and held-out test-set evaluation. Raw datasets, pretrained
+weights, comparison baselines, and precomputed experimental result files are
+not redistributed.
 
 ## Installation
 
@@ -102,8 +103,8 @@ data/
 
 | Dataset | Expected content | Windowing | Training/validation data |
 | --- | --- | --- | --- |
-| IPIX | NetCDF `.cdf`, variable `adc_data`; HH/HV/VH/VV channels | 512 pulses, stride 32 | Stratified random split: 56% / 14%; the remaining 30% is reserved and not materialized by this release |
-| SDRDSP2022 | HDF5-based `.mat`, matrix `amplitude_complex_T1` | 1024 pulses; target stride 200, clutter stride 1024 | Chronological split: first 70% / next 15%; the final 15% is reserved and not materialized by this release |
+| IPIX | NetCDF `.cdf`, variable `adc_data`; HH/HV/VH/VV channels | 512 pulses, stride 32 | Stratified random split: 56% training / 14% validation / 30% test |
+| SDRDSP2022 | HDF5-based `.mat`, matrix `amplitude_complex_T1` | 1024 pulses; target stride 200, clutter stride 1024 | Chronological split: first 70% training / next 15% validation / final 15% test |
 
 For IPIX, the primary target range bin is labeled positive, documented
 target-affected neighboring bins are excluded, and the remaining range bins
@@ -124,12 +125,25 @@ Run an SDRDSP2022 experiment:
 python train.py --config configs/sdrdsp2022.yaml
 ```
 
+After training, evaluate the selected checkpoint on the held-out test split:
+
+```bash
+python test.py --config configs/ipix.yaml
+python test.py --config configs/sdrdsp2022.yaml
+```
+
+The test command determines the detection threshold from test-set clutter at
+the configured target `Pfa`, following the paper protocol. It reports `Pd`,
+the realized `Pfa`, and ROC AUC.
+
 The default output directories are `outputs/ipix/` and
-`outputs/sdrdsp2022/`. Each run creates:
+`outputs/sdrdsp2022/`. The training and test commands create:
 
 - `model.pt`: the selected model state and training configuration;
 - `normalizer.npz`: normalization statistics fitted on the training split;
-- `history.json`: per-epoch training and validation history.
+- `history.json`: per-epoch training and validation history;
+- `test_metrics.json`: held-out test metrics and ROC coordinates, created by
+  `test.py`.
 
 These generated files are ignored by Git and are not part of the public
 release.
