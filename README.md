@@ -4,8 +4,8 @@ Official implementation of **HiMTS-Net: A Native-Axis-Preserving Hierarchical
 Multi-Domain Time--Spectral Network for Small Target Detection in Sea
 Clutter**.
 
-**Authors:** Fulun Miao (Beijing Institute of Technology) and Guanqun Wang
-(Peking University)
+**Authors:** Fulun Miao, Quanhua Liu, Huayu Fan, Yi Liu, Yuanshuai Li, Guanqun Wang, and Baogui Qi<br>
+The manuscript associated with this repository is currently under review.
 
 ## Overview
 
