@@ -169,7 +169,7 @@ manuscript:
 @misc{miao2026himtsnet,
   title  = {HiMTS-Net: A Native-Axis-Preserving Hierarchical Multi-Domain
             Time--Spectral Network for Small Target Detection in Sea Clutter},
-  author = {Fulun Miao and Guanqun Wang},
+  author = {Fulun Miao and Quanhua Liu and Huayu Fan and Yi Liu and Yuanshuai Li and Guanqun Wang and Baogui Qi},
   year   = {2026},
   note   = {Manuscript}
 }
