@@ -25,7 +25,7 @@ by adaptive feature-level fusion.*
 ### Highlights
 
 - Four complementary inputs: complex slow-time components, local DSE,
-  full-window entropy contribution, and spectral marginal spectrum (SMS).
+  full-window entropy contribution, and STFT marginal spectrum (SMS).
 - Native-axis-preserving 1D processing without image resizing or
   interpolation.
 - Hierarchical residual encoders with increasing temporal/spectral receptive
@@ -98,7 +98,7 @@ data/
 
 | Dataset | Expected content | Windowing | Training/validation data |
 | --- | --- | --- | --- |
-| IPIX | NetCDF `.cdf`, variable `adc_data`; HH/HV/VH/VV channels | 512 pulses, stride 32 | Stratified random split: 56% training / 14% validation / 30% test |
+| IPIX | NetCDF `.cdf`, variable `adc_data`; HH/HV/VH/VV channels | 512 pulses, stride 32 | Random split: 70% training pool / 30% test; 20% of the training pool reserved for validation |
 | SDRDSP2022 | HDF5-based `.mat`, matrix `amplitude_complex_T1` | 1024 pulses; target stride 200, clutter stride 1024 | Chronological split: first 70% training / next 15% validation / final 15% test |
 
 For IPIX, the primary target range bin is labeled positive, documented
